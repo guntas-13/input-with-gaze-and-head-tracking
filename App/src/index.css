@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* small helpers to better match the illustrated style */
+.input-card {
+/* prevent button focus outline from shifting layout */
+}
+
+
+/* you can add subtle inner shadow for the monitor look */
+:root {
+--monitor-inner: rgba(0,0,0,0.04);
+}
+
+
+/* example to ensure images are crisp */
+img { image-rendering: -webkit-optimize-contrast; }

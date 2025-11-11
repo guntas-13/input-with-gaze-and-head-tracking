@@ -1,0 +1,148 @@
+.keyboard-container {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 14px;
+  padding: 0.4rem;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.keyboard-header {
+  background: #e91e63;
+  color: #fff;
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  border: 2px solid #c2185b;
+  flex-shrink: 0;
+}
+
+.keyboard-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 0.35rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.keyboard-key {
+  border: 2.5px solid #333;
+  border-radius: 8px;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  cursor: none;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  transition: transform 0.1s ease;
+  position: relative;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.keyboard-key:hover {
+  transform: translateY(-2px);
+}
+
+.key-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.key-label {
+  font-size: 0.75rem;
+  text-align: center;
+  color: #000;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+/* Special styling for category keys (uppercase) */
+.keyboard-key.category .key-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Keys without icons should have larger text */
+.keyboard-key:not(:has(.key-icon)) .key-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Color coding types */
+.keyboard-key.pronoun {
+  /* Yellow - pronouns (I, my, you, it) */
+  border-color: #f9a825;
+}
+
+.keyboard-key.verb {
+  /* Green/Gray - verbs */
+  border-color: #66bb6a;
+}
+
+.keyboard-key.verb.color\:pink {
+  /* Pink for don't */
+  border-color: #ef5350;
+}
+
+.keyboard-key.adjective {
+  /* Purple - adjectives/descriptors */
+  border-color: #ab47bc;
+}
+
+.keyboard-key.category {
+  /* Various colors for categories */
+  border-color: #42a5f5;
+}
+
+.keyboard-key.action {
+  /* Orange/Gray for actions */
+  border-color: #ff7043;
+}
+
+.keyboard-key.response {
+  /* Green for yes/no responses */
+  border-color: #66bb6a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .keyboard-grid {
+    gap: 0.3rem;
+  }
+  
+  .keyboard-key {
+    min-height: 60px;
+    padding: 0.3rem;
+  }
+  
+  .key-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .key-label {
+    font-size: 0.7rem;
+  }
+  
+  .keyboard-key:not(:has(.key-icon)) .key-label {
+    font-size: 1rem;
+  }
+}
