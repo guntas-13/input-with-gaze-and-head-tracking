@@ -40,29 +40,32 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border: 3px solid #000;
-  border-radius: 8px;
-  background: #ffccbc;
-  color: #000;
-  font-size: 1.2rem;
-  font-weight: 700;
+  width: 70px;
+  height: 56px;
+  border: none;
+  background: transparent;
   cursor: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
   padding: 0;
+  transition: transform 0.2s ease;
 }
 
 .backspace-btn img {
-  width: 32px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .close-btn:hover,
 .backspace-btn:hover {
-  background: #ffab91;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.backspace-btn:hover img {
+  transform: translateY(-6px) scale(1.15);
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
 }

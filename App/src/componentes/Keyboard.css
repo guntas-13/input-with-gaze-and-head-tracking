@@ -47,22 +47,18 @@
   cursor: none;
   font-family: "Courier New", monospace;
   font-weight: 600;
-  transition: transform 0.1s ease;
+  transition: all 0.2s ease;
   position: relative;
   min-height: 0;
   box-sizing: border-box;
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.keyboard-key:hover {
-  transform: translateY(-2px);
-}
-
-.key-icon {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
-  flex-shrink: 0;
+.keyboard-key:hover,
+.keyboard-key.hovered {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.25);
 }
 
 .key-label {
@@ -72,6 +68,19 @@
   line-height: 1.1;
   word-break: break-word;
   font-weight: 700;
+  position: relative;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.key-icon {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10000;
+  pointer-events: none;
 }
 
 /* Special styling for category keys (uppercase) */

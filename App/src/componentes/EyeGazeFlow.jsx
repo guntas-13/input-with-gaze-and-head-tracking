@@ -41,8 +41,10 @@ export default function EyeGazeFlow({ onBack }) {
     setIndex(0);
   };
 
-  // Track mouse position
+  // Track mouse position (only when NOT in done step)
   useEffect(() => {
+    if (step === "done") return; // Don't track mouse when keyboard is shown
+
     const setVars = (x, y) => {
       mouseRef.current = { x, y };
       document.body.style.setProperty("--mouse-x", `${x}px`);
@@ -65,10 +67,12 @@ export default function EyeGazeFlow({ onBack }) {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("touchmove", onTouch);
     };
-  }, []);
+  }, [step]);
 
-  // Dwell detection for buttons and calibration targets
+  // Dwell detection for buttons and calibration targets (only when NOT in done step)
   useEffect(() => {
+    if (step === "done") return; // Don't run dwell detection when keyboard is shown
+
     const checkHover = () => {
       const { x, y } = mouseRef.current;
       let found = null;
@@ -118,8 +122,10 @@ export default function EyeGazeFlow({ onBack }) {
     };
   }, [hoveredElement, step]);
 
-  // Handle dwell timer and actions
+  // Handle dwell timer and actions (only when NOT in done step)
   useEffect(() => {
+    if (step === "done") return; // Don't handle dwell when keyboard is shown
+
     if (dwellTimerRef.current) {
       clearTimeout(dwellTimerRef.current);
       dwellTimerRef.current = null;
@@ -149,8 +155,18 @@ export default function EyeGazeFlow({ onBack }) {
     };
   }, [hoveredElement, step]);
 
-  // Update cursor fill state
+  // Update cursor fill state (only when NOT in done step)
   useEffect(() => {
+    if (step === "done") {
+      // Reset cursor when keyboard is shown
+      document.body.style.setProperty("--dwell-duration", "0s");
+      document.body.style.setProperty(
+        "--cursor-fill",
+        "inset(100% 0 0 0 round 50%)"
+      );
+      return;
+    }
+
     if (hoveredElement) {
       document.body.style.setProperty("--dwell-duration", `${DWELL_TIME}ms`);
       requestAnimationFrame(() => {
@@ -168,7 +184,7 @@ export default function EyeGazeFlow({ onBack }) {
         );
       });
     }
-  }, [hoveredElement]);
+  }, [hoveredElement, step]);
 
   // Auto-transition from success to done after 2 seconds
   useEffect(() => {

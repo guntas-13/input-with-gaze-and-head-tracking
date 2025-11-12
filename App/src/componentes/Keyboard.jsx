@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Keyboard.css";
 
 // Import icons from the icons folder
@@ -634,21 +634,22 @@ const KEYBOARD_LAYOUTS = {
   ],
 };
 
-const DWELL_TIME = 2000; // 2 seconds
-
 export default function Keyboard({
   onKeyPress,
   sentence = "",
   onSentenceChange,
   getLLMSuggestions,
   onClose,
+  mouseRef,
+  rafRef,
+  playHoverSound,
+  startDwellTimer,
+  clearDwellTimer,
+  hoveredElement,
+  setHoveredElement,
 }) {
-  const [hoveredKey, setHoveredKey] = useState(null);
   const [currentLayout, setCurrentLayout] = useState("default");
   const [currentKeys, setCurrentKeys] = useState(KEYBOARD_LAYOUTS.default);
-  const dwellTimerRef = useRef(null);
-  const mouseRef = useRef({ x: -1000, y: -1000 });
-  const rafRef = useRef(0);
 
   // Function to determine next layout based on sentence
   const getNextLayout = (updatedSentence) => {
@@ -703,69 +704,27 @@ export default function Keyboard({
     // Fallback to pattern-based layout
     const nextLayout = getNextLayout(updatedSentence);
     setCurrentLayout(nextLayout);
-    setCurrentKeys(KEYBOARD_LAYOUTS[nextLayout]);
   };
 
-  // Track mouse position
+  // Note: Hover detection is handled by KeyboardWithInput parent component
+  // The parent detects all elements (keyboard keys + backspace) in a single RAF loop
+
+  // Handle dwell timer and actions for keyboard keys only
   useEffect(() => {
-    const setVars = (x, y) => {
-      mouseRef.current = { x, y };
-      document.body.style.setProperty("--mouse-x", `${x}px`);
-      document.body.style.setProperty("--mouse-y", `${y}px`);
-    };
+    clearDwellTimer();
 
-    const onMove = (e) => {
-      setVars(e.clientX, e.clientY);
-    };
-
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-
-  // Dwell detection for keyboard keys
-  useEffect(() => {
-    const checkHover = () => {
-      const { x, y } = mouseRef.current;
-      let found = null;
-
-      const keys = document.querySelectorAll(".keyboard-key");
-      keys.forEach((keyEl) => {
-        const rect = keyEl.getBoundingClientRect();
-        if (
-          x >= rect.left &&
-          x <= rect.right &&
-          y >= rect.top &&
-          y <= rect.bottom
-        ) {
-          found = keyEl.getAttribute("data-key-id");
+    // Only handle keyboard keys, not backspace (backspace is handled in KeyboardWithInput)
+    if (hoveredElement && hoveredElement !== "backspace-btn") {
+      console.log("Starting dwell timer for key:", hoveredElement);
+      startDwellTimer(async () => {
+        console.log("Dwell timer completed for key:", hoveredElement);
+        const key = currentKeys.find((k) => k.id === hoveredElement);
+        if (!key) {
+          console.log("Key not found:", hoveredElement);
+          return;
         }
-      });
 
-      if (found !== hoveredKey) {
-        setHoveredKey(found);
-      }
-
-      rafRef.current = requestAnimationFrame(checkHover);
-    };
-
-    rafRef.current = requestAnimationFrame(checkHover);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [hoveredKey]);
-
-  // Handle dwell timer and actions
-  useEffect(() => {
-    if (dwellTimerRef.current) {
-      clearTimeout(dwellTimerRef.current);
-      dwellTimerRef.current = null;
-    }
-
-    if (hoveredKey) {
-      dwellTimerRef.current = setTimeout(async () => {
-        const key = currentKeys.find((k) => k.id === hoveredKey);
-        if (!key) return;
+        console.log("Executing action for key:", key.label);
 
         if (key.id === "clear") {
           onSentenceChange("");
@@ -798,37 +757,24 @@ export default function Keyboard({
         if (onKeyPress) {
           onKeyPress(key);
         }
-      }, DWELL_TIME);
-    }
 
-    return () => {
-      if (dwellTimerRef.current) {
-        clearTimeout(dwellTimerRef.current);
-        dwellTimerRef.current = null;
-      }
-    };
-  }, [hoveredKey, onKeyPress, sentence, onSentenceChange, currentKeys]);
-
-  // Update cursor fill state
-  useEffect(() => {
-    if (hoveredKey) {
-      document.body.style.setProperty("--dwell-duration", `${DWELL_TIME}ms`);
-      requestAnimationFrame(() => {
-        document.body.style.setProperty(
-          "--cursor-fill",
-          "inset(0 0 0 0 round 50%)"
-        );
-      });
-    } else {
-      document.body.style.setProperty("--dwell-duration", "0s");
-      requestAnimationFrame(() => {
-        document.body.style.setProperty(
-          "--cursor-fill",
-          "inset(100% 0 0 0 round 50%)"
-        );
+        // Reset hovered element after action completes to reset cursor
+        setHoveredElement(null);
       });
     }
-  }, [hoveredKey]);
+
+    return clearDwellTimer;
+  }, [
+    hoveredElement,
+    onKeyPress,
+    sentence,
+    onSentenceChange,
+    currentKeys,
+    onClose,
+    startDwellTimer,
+    clearDwellTimer,
+    setHoveredElement,
+  ]);
 
   return (
     <div className="keyboard-container">
@@ -840,7 +786,7 @@ export default function Keyboard({
             key={key.id}
             data-key-id={key.id}
             className={`keyboard-key ${key.type} ${
-              hoveredKey === key.id ? "hovered" : ""
+              hoveredElement === key.id ? "hovered" : ""
             }`}
             style={{ backgroundColor: key.color }}
             aria-label={key.label}
