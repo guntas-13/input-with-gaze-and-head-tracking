@@ -1,5 +1,7 @@
 # Multimodal Input App
 
+![](./assets/interface.png)
+
 ```
 npm install
 npm run dev
