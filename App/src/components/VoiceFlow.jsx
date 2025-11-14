@@ -21,6 +21,7 @@ export default function VoiceFlow({ onBack, audioEnabled }) {
   const speechSynthRef = useRef(null);
   const hoverSoundRef = useRef(null);
   const interimTranscriptRef = useRef("");
+  const isPausedRef = useRef(false);
 
   const DWELL_TIME = 2000;
 
@@ -58,6 +59,7 @@ export default function VoiceFlow({ onBack, audioEnabled }) {
 
     recognition.onstart = () => {
       console.log("Speech recognition started");
+      isPausedRef.current = false;
       setIsListening(true);
       setIsPaused(false);
     };
@@ -96,13 +98,9 @@ export default function VoiceFlow({ onBack, audioEnabled }) {
     };
 
     recognition.onend = () => {
-      console.log("Speech recognition ended");
-      // Only set isListening to false if we're not in a paused state
-      setIsListening((current) => {
-        // If we're currently listening, it means this was an unexpected end
-        // In that case, we should mark as not listening
-        return false;
-      });
+      console.log("Speech recognition ended, isPaused:", isPausedRef.current);
+      setIsListening(false);
+      // Don't change isPaused state here - it's already set by handlePause
     };
 
     recognitionRef.current = recognition;
@@ -247,11 +245,18 @@ export default function VoiceFlow({ onBack, audioEnabled }) {
   const handlePlay = () => {
     if (recognitionRef.current && !isListening) {
       try {
+        isPausedRef.current = false;
         setIsPaused(false);
         recognitionRef.current.start();
-        console.log("Starting speech recognition");
+        console.log("Starting speech recognition from handlePlay");
       } catch (e) {
         console.error("Error starting recognition:", e);
+        // If already started, this error is expected
+        if (e.message && e.message.includes("already started")) {
+          console.log("Recognition already started, updating state");
+          setIsListening(true);
+          setIsPaused(false);
+        }
       }
     }
   };
@@ -260,9 +265,10 @@ export default function VoiceFlow({ onBack, audioEnabled }) {
   const handlePause = () => {
     if (recognitionRef.current && isListening) {
       try {
-        // Set states before stopping to prevent race condition
-        setIsListening(false);
+        // Set ref and states before stopping to prevent race condition
+        isPausedRef.current = true;
         setIsPaused(true);
+        setIsListening(false); // Update UI immediately
         recognitionRef.current.stop();
         console.log("Pausing speech recognition");
       } catch (e) {
