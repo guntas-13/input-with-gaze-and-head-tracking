@@ -1,3 +1,15 @@
+/* Hide the blue cursor when keyboard is active */
+.keyboard-with-input-screen ~ body::before,
+.keyboard-with-input-screen ~ body::after {
+  display: none !important;
+}
+
+/* Alternative approach: hide via parent */
+body:has(.keyboard-with-input-screen)::before,
+body:has(.keyboard-with-input-screen)::after {
+  display: none !important;
+}
+
 /* Keyboard with input screen */
 .keyboard-with-input-screen {
   width: 100vw;
@@ -206,4 +218,331 @@ body {
   color: #fff;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.03em;
+}
+
+/* Settings Popup Styles */
+.settings-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.3s ease;
+  pointer-events: all !important;
+}
+
+.settings-popup {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3), 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  min-width: 550px;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 100000;
+  pointer-events: all !important;
+}
+
+.settings-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 1rem;
+}
+
+.settings-popup-header h2 {
+  font-family: "Courier New", monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3), 0 3px 15px rgba(0, 0, 0, 0.4);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.settings-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.settings-close-btn:hover {
+  background: rgba(255, 82, 82, 0.8);
+  border-color: #ff5252;
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.5);
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.setting-control {
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.setting-control:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+
+.setting-name {
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
+}
+
+.setting-value {
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffd54f;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 213, 79, 0.4);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+  min-width: 50px;
+  text-align: center;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.slider-min,
+.slider-max {
+  font-family: "Courier New", monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e3f2fd;
+  min-width: 35px;
+  text-align: center;
+}
+
+.setting-slider {
+  flex: 1;
+  height: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+  border: 3px solid #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(255, 213, 79, 0.3);
+  transition: all 0.2s ease;
+}
+
+.setting-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(255, 213, 79, 0.5);
+}
+
+.setting-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+  border: 3px solid #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(255, 213, 79, 0.3);
+  transition: all 0.2s ease;
+}
+
+.setting-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(255, 213, 79, 0.5);
+}
+
+.camera-preview-section {
+  background: rgba(0, 0, 0, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+  order: -1; /* Move to top */
+}
+
+.camera-title {
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  margin: 0 0 0.8rem 0;
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.camera-preview-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 0.5rem;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+#settings-camera-container canvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.camera-placeholder {
+  text-align: center;
+}
+
+.camera-placeholder p {
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #90caf9;
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.camera-video,
+.camera-canvas {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.settings-status {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.status-label {
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e3f2fd;
+  letter-spacing: 0.02em;
+}
+
+.status-value {
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.status-value.active {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.2);
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-value.inactive {
+  color: #ff5252;
+  background: rgba(255, 82, 82, 0.2);
+  border: 2px solid #ff5252;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+  }
+}
+
+/* Scrollbar styling for settings popup */
+.settings-popup::-webkit-scrollbar {
+  width: 10px;
+}
+
+.settings-popup::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.settings-popup::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+.settings-popup::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
 }

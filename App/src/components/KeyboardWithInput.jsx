@@ -658,10 +658,17 @@ export default function KeyboardWithInput({
   const [trackyMouseEnabled, setTrackyMouseEnabled] = useState(false);
   const [trackyMouseReady, setTrackyMouseReady] = useState(false);
   const [showTimePopup, setShowTimePopup] = useState(false);
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [currentTime, setCurrentTime] = useState({
     time: "",
     day: "",
     date: "",
+  });
+  const [trackySettings, setTrackySettings] = useState({
+    horizontalSensitivity: 25,
+    verticalSensitivity: 50,
+    acceleration: 50,
+    dwellTime: 4000, // milliseconds (4 seconds default)
   });
 
   const mouseRef = useRef({ x: -1000, y: -1000 });
@@ -900,9 +907,6 @@ export default function KeyboardWithInput({
   useEffect(() => {
     const onMove = (e) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
-      // Always update position for regular cursor
-      document.body.style.setProperty("--mouse-x", `${e.clientX}px`);
-      document.body.style.setProperty("--mouse-y", `${e.clientY}px`);
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
@@ -914,7 +918,7 @@ export default function KeyboardWithInput({
       const duration =
         hoveredElement === "backspace-btn" || hoveredElement === "speaker-btn"
           ? BACKSPACE_DWELL_TIME
-          : DWELL_TIME;
+          : trackySettings.dwellTime;
 
       // Update TrackyMouse pointer (red)
       const pointer = document.querySelector(".tracky-mouse-pointer");
@@ -935,28 +939,12 @@ export default function KeyboardWithInput({
         });
       }
 
-      // Update blue cursor (always active)
-      document.body.style.setProperty("--dwell-duration", "0ms");
-      document.body.style.setProperty(
-        "--cursor-fill",
-        "inset(100% 0 0 0 round 50%)"
-      );
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          document.body.style.setProperty("--dwell-duration", `${duration}ms`);
-          document.body.style.setProperty(
-            "--cursor-fill",
-            "inset(0 0 0 0 round 50%)"
-          );
-        });
-      });
-
       if (hoverSoundRef.current && audioEnabled) {
         hoverSoundRef.current.currentTime = 0;
         hoverSoundRef.current.play().catch(() => {});
       }
     } else {
-      // Reset fill when not hovering - both cursors
+      // Reset fill when not hovering
       const pointer = document.querySelector(".tracky-mouse-pointer");
       if (pointer) {
         pointer.style.setProperty("--dwell-duration", "0ms");
@@ -965,19 +953,14 @@ export default function KeyboardWithInput({
           "inset(100% 0 0 0 round 50%)"
         );
       }
-      document.body.style.setProperty("--dwell-duration", "0ms");
-      document.body.style.setProperty(
-        "--cursor-fill",
-        "inset(100% 0 0 0 round 50%)"
-      );
     }
   }, [hoveredElement, audioEnabled, trackyMouseEnabled]);
 
   // Hover detection loop
   useEffect(() => {
     const checkHover = () => {
-      // Skip hover detection if time popup is showing
-      if (showTimePopup) {
+      // Skip hover detection if any popup is showing
+      if (showTimePopup || showSettingsPopup) {
         rafRef.current = requestAnimationFrame(checkHover);
         return;
       }
@@ -1036,7 +1019,41 @@ export default function KeyboardWithInput({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [hoveredElement, showTimePopup]);
+  }, [hoveredElement, showTimePopup, showSettingsPopup]);
+
+  // Update settings popup camera feed
+  useEffect(() => {
+    if (!showSettingsPopup) return;
+
+    const updateCamera = () => {
+      const trackyCanvas = document.querySelector(".tracky-mouse-canvas");
+      const container = document.getElementById("settings-camera-container");
+      if (trackyCanvas && container) {
+        // Clone and update canvas continuously
+        let existingCanvas = container.querySelector("canvas");
+
+        if (!existingCanvas) {
+          existingCanvas = document.createElement("canvas");
+          existingCanvas.style.maxWidth = "100%";
+          existingCanvas.style.borderRadius = "8px";
+          container.innerHTML = "";
+          container.appendChild(existingCanvas);
+        }
+
+        // Copy dimensions and content
+        existingCanvas.width = trackyCanvas.width;
+        existingCanvas.height = trackyCanvas.height;
+        const destCtx = existingCanvas.getContext("2d");
+        destCtx.drawImage(trackyCanvas, 0, 0);
+      }
+    };
+
+    // Update camera feed continuously
+    const interval = setInterval(updateCamera, 100); // Update every 100ms
+    updateCamera(); // Initial update
+
+    return () => clearInterval(interval);
+  }, [showSettingsPopup]);
 
   // Handle backspace
   const handleBackspace = () => {
@@ -1101,6 +1118,67 @@ export default function KeyboardWithInput({
     const nextLayout = getNextLayout(updatedSentence);
     setCurrentLayout(nextLayout);
     setCurrentKeys(KEYBOARD_LAYOUTS[nextLayout]);
+  };
+
+  // Handle settings popup
+  const handleSettingsPopup = () => {
+    if (showSettingsPopup) {
+      setShowSettingsPopup(false);
+      console.log("Settings popup closed");
+    } else {
+      setShowSettingsPopup(true);
+      console.log("Settings popup opened");
+
+      // Sync current slider values from TrackyMouse
+      setTimeout(() => {
+        const xSlider = document.querySelector(".tracky-mouse-sensitivity-x");
+        const ySlider = document.querySelector(".tracky-mouse-sensitivity-y");
+        const accelSlider = document.querySelector(
+          ".tracky-mouse-acceleration"
+        );
+
+        if (xSlider && ySlider && accelSlider) {
+          setTrackySettings({
+            horizontalSensitivity: parseFloat(xSlider.value),
+            verticalSensitivity: parseFloat(ySlider.value),
+            acceleration: parseFloat(accelSlider.value),
+          });
+        }
+      }, 50);
+
+      // Optionally speak
+      if (audioEnabled) {
+        speakText("Settings");
+      }
+    }
+  };
+
+  // Handle sensitivity changes
+  const handleSensitivityChange = (type, value) => {
+    const newSettings = { ...trackySettings, [type]: parseFloat(value) };
+    setTrackySettings(newSettings);
+
+    // Update TrackyMouse UI sliders directly and trigger their onchange handlers
+    try {
+      let slider;
+      if (type === "horizontalSensitivity") {
+        slider = document.querySelector(".tracky-mouse-sensitivity-x");
+      } else if (type === "verticalSensitivity") {
+        slider = document.querySelector(".tracky-mouse-sensitivity-y");
+      } else if (type === "acceleration") {
+        slider = document.querySelector(".tracky-mouse-acceleration");
+      }
+
+      if (slider) {
+        slider.value = value;
+        // Trigger the onchange handler that TrackyMouse set up
+        if (slider.onchange) {
+          slider.onchange(new Event("change"));
+        }
+      }
+    } catch (error) {
+      console.error("Error updating TrackyMouse settings:", error);
+    }
   };
 
   // Handle time popup
@@ -1181,9 +1259,7 @@ export default function KeyboardWithInput({
       speakText("exit");
       if (onClose) onClose();
     } else if (key.id === "settings") {
-      speakText("settings");
-      setCurrentLayout("settings");
-      setCurrentKeys(KEYBOARD_LAYOUTS.settings);
+      handleSettingsPopup();
     } else if (key.type === "category" && KEYBOARD_LAYOUTS[key.id]) {
       speakText(key.label);
       setCurrentLayout(key.id);
@@ -1215,7 +1291,7 @@ export default function KeyboardWithInput({
     const dwellTime =
       hoveredElement === "backspace-btn" || hoveredElement === "speaker-btn"
         ? BACKSPACE_DWELL_TIME
-        : DWELL_TIME;
+        : trackySettings.dwellTime;
 
     dwellTimerRef.current = setTimeout(() => {
       console.log("Dwell completed for:", hoveredElement);
@@ -1248,6 +1324,164 @@ export default function KeyboardWithInput({
             <div className="time-popup-time">{currentTime.time}</div>
             <div className="time-popup-day">{currentTime.day}</div>
             <div className="time-popup-date">{currentTime.date}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Popup Overlay */}
+      {showSettingsPopup && (
+        <div
+          className="settings-popup-overlay"
+          onClick={(e) => {
+            if (e.target.className === "settings-popup-overlay") {
+              handleSettingsPopup();
+            }
+          }}
+        >
+          <div className="settings-popup">
+            <div className="settings-popup-header">
+              <h2>Head-Gaze TrackyMouse Settings</h2>
+              <button
+                className="settings-close-btn"
+                onClick={handleSettingsPopup}
+                aria-label="Close settings"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="settings-content">
+              {/* Camera Preview - Moved to top */}
+              <div className="camera-preview-section">
+                <h3 className="camera-title">Camera Preview</h3>
+                <div
+                  className="camera-preview-box"
+                  id="settings-camera-container"
+                >
+                  {/* TrackyMouse canvas will be cloned here */}
+                </div>
+              </div>
+
+              {/* Horizontal Sensitivity */}
+              <div className="setting-control">
+                <label className="setting-label">
+                  <span className="setting-name">Horizontal Sensitivity</span>
+                  <span className="setting-value">
+                    {trackySettings.horizontalSensitivity.toFixed(0)}
+                  </span>
+                </label>
+                <div className="slider-container">
+                  <span className="slider-min">Slow</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={trackySettings.horizontalSensitivity}
+                    onChange={(e) =>
+                      handleSensitivityChange(
+                        "horizontalSensitivity",
+                        e.target.value
+                      )
+                    }
+                    className="setting-slider"
+                  />
+                  <span className="slider-max">Fast</span>
+                </div>
+              </div>
+
+              {/* Vertical Sensitivity */}
+              <div className="setting-control">
+                <label className="setting-label">
+                  <span className="setting-name">Vertical Sensitivity</span>
+                  <span className="setting-value">
+                    {trackySettings.verticalSensitivity.toFixed(0)}
+                  </span>
+                </label>
+                <div className="slider-container">
+                  <span className="slider-min">Slow</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={trackySettings.verticalSensitivity}
+                    onChange={(e) =>
+                      handleSensitivityChange(
+                        "verticalSensitivity",
+                        e.target.value
+                      )
+                    }
+                    className="setting-slider"
+                  />
+                  <span className="slider-max">Fast</span>
+                </div>
+              </div>
+
+              {/* Acceleration */}
+              <div className="setting-control">
+                <label className="setting-label">
+                  <span className="setting-name">Acceleration</span>
+                  <span className="setting-value">
+                    {trackySettings.acceleration.toFixed(0)}
+                  </span>
+                </label>
+                <div className="slider-container">
+                  <span className="slider-min">Linear</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={trackySettings.acceleration}
+                    onChange={(e) =>
+                      handleSensitivityChange("acceleration", e.target.value)
+                    }
+                    className="setting-slider"
+                  />
+                  <span className="slider-max">Smooth</span>
+                </div>
+              </div>
+
+              {/* Dwell Time */}
+              <div className="setting-control">
+                <label className="setting-label">
+                  <span className="setting-name">Dwell Time</span>
+                  <span className="setting-value">
+                    {(trackySettings.dwellTime / 1000).toFixed(1)}s
+                  </span>
+                </label>
+                <div className="slider-container">
+                  <span className="slider-min">2s</span>
+                  <input
+                    type="range"
+                    min="2000"
+                    max="8000"
+                    step="500"
+                    value={trackySettings.dwellTime}
+                    onChange={(e) =>
+                      handleSensitivityChange("dwellTime", e.target.value)
+                    }
+                    className="setting-slider"
+                  />
+                  <span className="slider-max">8s</span>
+                </div>
+              </div>
+
+              {/* Status Info */}
+              <div className="settings-status">
+                <div className="status-item">
+                  <span className="status-label">Status:</span>
+                  <span
+                    className={`status-value ${
+                      trackyMouseEnabled ? "active" : "inactive"
+                    }`}
+                  >
+                    {trackyMouseEnabled ? "● Active" : "○ Inactive"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
