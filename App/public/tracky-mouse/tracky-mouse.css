@@ -1,21 +1,35 @@
+/* Updated: Red hollow circle pointer with fill animation - v2.0 */
 .tracky-mouse-pointer {
-  z-index: 900000;
-  pointer-events: none;
+  z-index: 900000 !important;
+  pointer-events: none !important;
   border-radius: 50% !important;
-  background: radial-gradient(
-    circle,
-    #00ffff 0%,
-    #0099ff 40%,
-    #0066ff 100%
-  ) !important;
-  width: 24px !important;
-  height: 24px !important;
-  position: fixed;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 153, 255, 0.6),
-    0 0 30px rgba(0, 102, 255, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.5) !important;
-  border: 2px solid rgba(255, 255, 255, 0.8) !important;
-  animation: pulse-pointer 2s ease-in-out infinite !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  border: 3px solid #ff4444 !important;
+  width: 28px !important;
+  height: 28px !important;
+  position: fixed !important;
+  transform: translate(-50%, -50%) !important;
+  transition: transform 0.1s ease !important;
+  box-shadow: none !important;
+}
+
+/* Filled overlay for dwell animation - fills from bottom like water */
+.tracky-mouse-pointer::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 29px !important;
+  height: 29px !important;
+  background-color: #ff4444 !important;
+  background: #ff4444 !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  clip-path: var(--cursor-fill, inset(100% 0 0 0 round 50%)) !important;
+  transition: clip-path var(--dwell-duration, 0s) linear !important;
+  box-shadow: none !important;
 }
 
 @keyframes pulse-pointer {
