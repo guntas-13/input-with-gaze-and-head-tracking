@@ -6,20 +6,19 @@ import SpeakerIcon from "../icons/speaker.png";
 import popSound from "../sounds/ui-pop-sound-316482.mp3";
 
 // Import all keyboard icons
+import SettingsIcon from "../icons/settings.png";
+import ClearIcon from "../icons/clean.png";
 import MySelfIcon from "../icons/myself_10012465.png";
 import ExitIcon from "../icons/exit.png";
-import QuestionIcon from "../icons/question-mark.png";
-import PlaceIcon from "../icons/place.png";
-import PhoneIcon from "../icons/phone-call.png";
-import ClockIcon from "../icons/wall-clock_5378485.png";
+import ClockIcon from "../icons/clock.png";
 import HomeIcon from "../icons/home.png";
 import EatIcon from "../icons/binge-eating.png";
 import LikeIcon from "../icons/like.png";
 import RainbowIcon from "../icons/rainbow_10129397.png";
+import SadIcon from "../icons/sad.png";
 import DrinkIcon from "../icons/soda_1652494.png";
 import PlayIcon from "../icons/rc-car.png";
 import StopIcon from "../icons/stop_5181609.png";
-import AlphabetIcon from "../icons/alphabet.png";
 import CancelIcon from "../icons/cancel_1721955.png";
 import SmileIcon from "../icons/smile_9350598.png";
 import CheckIcon from "../icons/check-mark_5299048.png";
@@ -34,7 +33,6 @@ import SportsIcon from "../icons/sports.png";
 import BallIcon from "../icons/beach-ball.png";
 import CarsIcon from "../icons/rc-car.png";
 import SwingIcon from "../icons/swing.png";
-import PeopleIcon from "../icons/ancestors.png";
 import HurtIcon from "../icons/hurt.png";
 import NeedIcon from "../icons/need.png";
 import BuyIcon from "../icons/cash.png";
@@ -50,26 +48,27 @@ const KEYBOARD_LAYOUTS = {
   default: [
     { id: "i", label: "i", type: "pronoun", color: "#fff4d6" },
     {
-      id: "questions",
-      label: "QUESTIONS",
-      icon: QuestionIcon,
-      type: "category",
-      color: "#b3e5fc",
+      id: "bicycle",
+      label: "bicycle",
+      icon: BicycleIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
     {
-      id: "places",
-      label: "PLACES",
-      icon: PlaceIcon,
-      type: "category",
-      color: "#f5f5f5",
+      id: "videogame",
+      label: "video game",
+      icon: GameIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
     {
-      id: "social",
-      label: "SOCIAL",
-      icon: PhoneIcon,
-      type: "category",
-      color: "#f5f5f5",
+      id: "sports",
+      label: "sports",
+      icon: SportsIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
+
     {
       id: "time",
       label: "TIME",
@@ -102,10 +101,10 @@ const KEYBOARD_LAYOUTS = {
       color: "#e1bee7",
     },
     {
-      id: "describe",
-      label: "DESCRIBE",
-      icon: RainbowIcon,
-      type: "category",
+      id: "sad",
+      label: "sad",
+      icon: SadIcon,
+      type: "adjective",
       color: "#e1bee7",
     },
     { id: "you", label: "you", type: "pronoun", color: "#fff4d6" },
@@ -132,11 +131,11 @@ const KEYBOARD_LAYOUTS = {
       color: "#c8e6c9",
     },
     {
-      id: "vocab",
-      label: "VOCAB",
-      icon: AlphabetIcon,
+      id: "settings",
+      label: "SETTINGS",
+      icon: SettingsIcon,
       type: "category",
-      color: "#80deea",
+      color: "#f3f0e3",
     },
     { id: "it", label: "it", type: "pronoun", color: "#fff4d6" },
     {
@@ -167,20 +166,20 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "clear", label: "clear", type: "action", color: "#f5f5f5" },
+    {
+      id: "clear",
+      label: "clear",
+      icon: ClearIcon,
+      type: "action",
+      color: "#f5f5f5",
+    },
   ],
   afterI: [
     { id: "would", label: "would", type: "verb", color: "#f5f5f5" },
     { id: "am", label: "am", type: "verb", color: "#f5f5f5" },
     { id: "have", label: "have", type: "verb", color: "#f5f5f5" },
     { id: "got", label: "got", type: "verb", color: "#f5f5f5" },
-    {
-      id: "social",
-      label: "SOCIAL",
-      icon: PeopleIcon,
-      type: "category",
-      color: "#f5f5f5",
-    },
+    { id: "buy", label: "buy", icon: BuyIcon, type: "verb", color: "#c8e6c9" },
     {
       id: "home",
       label: "HOME",
@@ -229,7 +228,13 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "buy", label: "buy", icon: BuyIcon, type: "verb", color: "#c8e6c9" },
+    {
+      id: "settings",
+      label: "SETTINGS",
+      icon: SettingsIcon,
+      type: "category",
+      color: "#f3f0e3",
+    },
     { id: "was", label: "was", type: "verb", color: "#f5f5f5" },
     {
       id: "dont",
@@ -259,30 +264,36 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "clear", label: "clear", type: "action", color: "#f5f5f5" },
+    {
+      id: "clear",
+      label: "clear",
+      icon: ClearIcon,
+      type: "action",
+      color: "#f5f5f5",
+    },
   ],
   afterILike: [
     { id: "i", label: "i", type: "pronoun", color: "#fff4d6" },
     {
-      id: "questions",
-      label: "QUESTIONS",
-      icon: QuestionIcon,
-      type: "category",
-      color: "#b3e5fc",
+      id: "bicycle",
+      label: "bicycle",
+      icon: BicycleIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
     {
-      id: "places",
-      label: "PLACES",
-      icon: PlaceIcon,
-      type: "category",
-      color: "#f5f5f5",
+      id: "videogame",
+      label: "video game",
+      icon: GameIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
     {
-      id: "people",
-      label: "PEOPLE",
-      icon: PeopleIcon,
-      type: "category",
-      color: "#f5f5f5",
+      id: "sports",
+      label: "sports",
+      icon: SportsIcon,
+      type: "noun",
+      color: "#c8e6c9",
     },
     {
       id: "time",
@@ -322,10 +333,10 @@ const KEYBOARD_LAYOUTS = {
       color: "#c8e6c9",
     },
     {
-      id: "describe",
-      label: "DESCRIBE",
-      icon: RainbowIcon,
-      type: "category",
+      id: "sad",
+      label: "sad",
+      icon: SadIcon,
+      type: "adjective",
       color: "#e1bee7",
     },
     { id: "you", label: "you", type: "pronoun", color: "#fff4d6" },
@@ -352,11 +363,11 @@ const KEYBOARD_LAYOUTS = {
       color: "#c8e6c9",
     },
     {
-      id: "vocab",
-      label: "VOCAB",
-      icon: AlphabetIcon,
+      id: "settings",
+      label: "SETTINGS",
+      icon: SettingsIcon,
       type: "category",
-      color: "#80deea",
+      color: "#f3f0e3",
     },
     { id: "it", label: "it", type: "pronoun", color: "#fff4d6" },
     { id: "s", label: "-s", type: "suffix", color: "#f5f5f5" },
@@ -381,7 +392,13 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "clear", label: "clear", type: "action", color: "#f5f5f5" },
+    {
+      id: "clear",
+      label: "clear",
+      icon: ClearIcon,
+      type: "action",
+      color: "#f5f5f5",
+    },
   ],
   vocab: [
     { id: "i", label: "i", type: "pronoun", color: "#fff4d6" },
@@ -497,7 +514,13 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "clear", label: "clear", type: "action", color: "#f5f5f5" },
+    {
+      id: "clear",
+      label: "clear",
+      icon: ClearIcon,
+      type: "action",
+      color: "#f5f5f5",
+    },
   ],
   afterILikeToPlay: [
     { id: "i", label: "i", type: "pronoun", color: "#fff4d6" },
@@ -613,7 +636,13 @@ const KEYBOARD_LAYOUTS = {
       type: "verb",
       color: "#c8e6c9",
     },
-    { id: "clear", label: "clear", type: "action", color: "#f5f5f5" },
+    {
+      id: "clear",
+      label: "clear",
+      icon: ClearIcon,
+      type: "action",
+      color: "#f5f5f5",
+    },
   ],
 };
 
@@ -628,6 +657,12 @@ export default function KeyboardWithInput({
   const [currentKeys, setCurrentKeys] = useState(KEYBOARD_LAYOUTS.default);
   const [trackyMouseEnabled, setTrackyMouseEnabled] = useState(false);
   const [trackyMouseReady, setTrackyMouseReady] = useState(false);
+  const [showTimePopup, setShowTimePopup] = useState(false);
+  const [currentTime, setCurrentTime] = useState({
+    time: "",
+    day: "",
+    date: "",
+  });
 
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const rafRef = useRef(0);
@@ -941,6 +976,12 @@ export default function KeyboardWithInput({
   // Hover detection loop
   useEffect(() => {
     const checkHover = () => {
+      // Skip hover detection if time popup is showing
+      if (showTimePopup) {
+        rafRef.current = requestAnimationFrame(checkHover);
+        return;
+      }
+
       const { x, y } = mouseRef.current;
       let found = null;
 
@@ -995,7 +1036,7 @@ export default function KeyboardWithInput({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [hoveredElement]);
+  }, [hoveredElement, showTimePopup]);
 
   // Handle backspace
   const handleBackspace = () => {
@@ -1062,6 +1103,57 @@ export default function KeyboardWithInput({
     setCurrentKeys(KEYBOARD_LAYOUTS[nextLayout]);
   };
 
+  // Handle time popup
+  const handleTimePopup = () => {
+    const now = new Date();
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const time = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const day = days[now.getDay()];
+    const date = `${
+      months[now.getMonth()]
+    } ${now.getDate()}, ${now.getFullYear()}`;
+
+    setCurrentTime({ time, day, date });
+    setShowTimePopup(true);
+
+    // Speak after a small delay
+    setTimeout(() => {
+      speakText(`${day}, ${date}, ${time}`);
+    }, 100);
+
+    // Auto-hide after 12 seconds
+    setTimeout(() => {
+      setShowTimePopup(false);
+    }, 12000);
+  };
+
   // Execute key action
   const executeKeyAction = async (keyId) => {
     console.log("executeKeyAction called for:", keyId);
@@ -1083,13 +1175,15 @@ export default function KeyboardWithInput({
       speakText("home");
       setCurrentLayout("default");
       setCurrentKeys(KEYBOARD_LAYOUTS.default);
+    } else if (key.id === "time") {
+      handleTimePopup();
     } else if (key.id === "exit") {
       speakText("exit");
       if (onClose) onClose();
-    } else if (key.id === "vocab") {
-      speakText("vocab");
-      setCurrentLayout("vocab");
-      setCurrentKeys(KEYBOARD_LAYOUTS.vocab);
+    } else if (key.id === "settings") {
+      speakText("settings");
+      setCurrentLayout("settings");
+      setCurrentKeys(KEYBOARD_LAYOUTS.settings);
     } else if (key.type === "category" && KEYBOARD_LAYOUTS[key.id]) {
       speakText(key.label);
       setCurrentLayout(key.id);
@@ -1147,6 +1241,17 @@ export default function KeyboardWithInput({
 
   return (
     <div className="keyboard-with-input-screen">
+      {/* Time Popup Overlay */}
+      {showTimePopup && (
+        <div className="time-popup-overlay">
+          <div className="time-popup">
+            <div className="time-popup-time">{currentTime.time}</div>
+            <div className="time-popup-day">{currentTime.day}</div>
+            <div className="time-popup-date">{currentTime.date}</div>
+          </div>
+        </div>
+      )}
+
       <div className="input-display">
         <input
           type="text"
