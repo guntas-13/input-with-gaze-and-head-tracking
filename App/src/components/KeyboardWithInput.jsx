@@ -659,6 +659,7 @@ export default function KeyboardWithInput({
   const [trackyMouseReady, setTrackyMouseReady] = useState(false);
   const [showTimePopup, setShowTimePopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
+  const [showSetupCompletePopup, setShowSetupCompletePopup] = useState(false);
   const [currentTime, setCurrentTime] = useState({
     time: "",
     day: "",
@@ -886,6 +887,12 @@ export default function KeyboardWithInput({
       console.log("TrackyMouse pointer control ready");
 
       setTrackyMouseEnabled(true);
+
+      // Show setup complete popup
+      setShowSetupCompletePopup(true);
+      setTimeout(() => {
+        setShowSetupCompletePopup(false);
+      }, 5000);
     } catch (error) {
       console.error("Error initializing TrackyMouse:", error);
     }
@@ -1317,6 +1324,16 @@ export default function KeyboardWithInput({
 
   return (
     <div className="keyboard-with-input-screen">
+      {/* Setup Complete Popup */}
+      {showSetupCompletePopup && (
+        <div className="time-popup-overlay">
+          <div className="time-popup">
+            <div className="time-popup-day">✓ Head Tracking Setup Complete</div>
+            <div className="time-popup-date">Use head gaze to navigate</div>
+          </div>
+        </div>
+      )}
+
       {/* Time Popup Overlay */}
       {showTimePopup && (
         <div className="time-popup-overlay">
