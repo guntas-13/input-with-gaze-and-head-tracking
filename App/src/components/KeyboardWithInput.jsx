@@ -626,12 +626,16 @@ export default function KeyboardWithInput({
   const [hoveredElement, setHoveredElement] = useState(null);
   const [currentLayout, setCurrentLayout] = useState("default");
   const [currentKeys, setCurrentKeys] = useState(KEYBOARD_LAYOUTS.default);
+  const [trackyMouseEnabled, setTrackyMouseEnabled] = useState(false);
+  const [trackyMouseReady, setTrackyMouseReady] = useState(false);
 
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const rafRef = useRef(0);
   const dwellTimerRef = useRef(null);
   const hoverSoundRef = useRef(null);
   const speechSynthRef = useRef(null);
+  const trackyMouseRef = useRef(null);
+  const dwellClickerRef = useRef(null);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -678,6 +682,232 @@ export default function KeyboardWithInput({
 
     return () => {
       if (hoverSoundRef.current) hoverSoundRef.current = null;
+    };
+  }, []);
+
+  // Auto-enable when TrackyMouse becomes ready
+  useEffect(() => {
+    if (trackyMouseReady && !trackyMouseEnabled) {
+      console.log("Auto-enabling head tracking...");
+      const timer = setTimeout(() => {
+        initTrackyMouse();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [trackyMouseReady, trackyMouseEnabled]);
+
+  // Check if Tracky Mouse is loaded
+  useEffect(() => {
+    console.log("Checking for TrackyMouse library...");
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    const checkTrackyMouse = () => {
+      if (typeof window.TrackyMouse !== "undefined") {
+        console.log("TrackyMouse library loaded");
+        console.log("TrackyMouse object:", window.TrackyMouse);
+        setTrackyMouseReady(true);
+      } else {
+        attempts++;
+        if (attempts < maxAttempts) {
+          if (attempts % 10 === 0) {
+            console.log(`Waiting for TrackyMouse... (${attempts / 10}s)`);
+          }
+          setTimeout(checkTrackyMouse, 100);
+        } else {
+          console.error("TrackyMouse library failed to load after 10 seconds");
+          console.error(
+            "Check: 1) Network tab for 404 errors, 2) Hard refresh (Cmd+Shift+R), 3) Console for script errors"
+          );
+        }
+      }
+    };
+
+    // Start checking after a small delay to let deferred script load
+    setTimeout(checkTrackyMouse, 100);
+  }, []);
+
+  // Function to initialize Tracky Mouse
+  const initTrackyMouse = async () => {
+    if (!trackyMouseReady || typeof window.TrackyMouse === "undefined") {
+      console.error("TrackyMouse not loaded");
+      return;
+    }
+
+    try {
+      console.log("Initializing TrackyMouse...");
+
+      window.TrackyMouse.dependenciesRoot = "/tracky-mouse";
+      console.log(
+        "Dependencies root set:",
+        window.TrackyMouse.dependenciesRoot
+      );
+
+      console.log("Loading dependencies...");
+      await window.TrackyMouse.loadDependencies();
+      console.log("Dependencies loaded");
+
+      console.log("Initializing head tracking...");
+      trackyMouseRef.current = window.TrackyMouse.init(null, {
+        statsJs: false,
+      });
+      console.log("Head tracking initialized");
+
+      setTimeout(() => {
+        const trackyUI = document.querySelector(".tracky-mouse-ui");
+        if (trackyUI) {
+          trackyUI.style.display = "none";
+          console.log("TrackyMouse UI hidden");
+        }
+      }, 100);
+
+      console.log("Requesting camera access...");
+      await window.TrackyMouse.useCamera();
+      console.log("Camera access granted");
+
+      // Auto-start tracking by simulating F9 press
+      console.log("Auto-starting tracking (F9)...");
+      const f9Event = new KeyboardEvent("keydown", {
+        key: "F9",
+        code: "F9",
+        keyCode: 120,
+        which: 120,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(f9Event);
+      console.log("Tracking started");
+
+      console.log("Setting up pointer control...");
+
+      // Enable the pointer explicitly
+      if (window.TrackyMouse.setPointerVisibility) {
+        window.TrackyMouse.setPointerVisibility(true);
+        console.log("Pointer visibility enabled");
+      }
+
+      let last_el_over = null;
+      window.TrackyMouse.onPointerMove = (x, y) => {
+        const target = document.elementFromPoint(x, y) || document.body;
+
+        // Update mouse reference for our existing hover detection
+        mouseRef.current = { x, y };
+
+        if (target !== last_el_over) {
+          if (last_el_over) {
+            const event = new PointerEvent("pointerleave", {
+              view: window,
+              clientX: x,
+              clientY: y,
+              pointerId: 1234567890,
+              pointerType: "mouse",
+              isPrimary: true,
+              bubbles: false,
+              cancelable: false,
+            });
+            last_el_over.dispatchEvent(event);
+          }
+          const event = new PointerEvent("pointerenter", {
+            view: window,
+            clientX: x,
+            clientY: y,
+            pointerId: 1234567890,
+            pointerType: "mouse",
+            isPrimary: true,
+            bubbles: false,
+            cancelable: false,
+          });
+          target.dispatchEvent(event);
+          last_el_over = target;
+        }
+
+        const event = new PointerEvent("pointermove", {
+          view: window,
+          clientX: x,
+          clientY: y,
+          pointerId: 1234567890,
+          pointerType: "mouse",
+          isPrimary: true,
+          button: 0,
+          buttons: 1,
+          bubbles: true,
+          cancelable: true,
+        });
+        target.dispatchEvent(event);
+      };
+      console.log("Pointer control configured");
+
+      setTimeout(() => {
+        const pointer = document.querySelector(".tracky-mouse-pointer");
+        if (pointer) {
+          pointer.style.cssText = `
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: radial-gradient(circle, #ff4444 0%, #cc0000 40%, #990000 100%) !important;
+            width: 24px !important;
+            height: 24px !important;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.8), 0 0 20px rgba(204, 0, 0, 0.6), 0 0 30px rgba(153, 0, 0, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.5) !important;
+            border: 2px solid rgba(255, 255, 255, 0.8) !important;
+            animation: pulse-pointer 2s ease-in-out infinite !important;
+            pointer-events: none !important;
+            z-index: 999999 !important;
+          `;
+          console.log("Custom pointer styling applied");
+          console.log("Pointer element:", pointer);
+        } else {
+          console.warn("Pointer element not found");
+        }
+      }, 500);
+
+      console.log("Initializing dwell clicking...");
+      const dwellConfig = {
+        targets:
+          ".keyboard-key, .backspace-btn, .speaker-btn, .enable-tracky-btn",
+        noCenter: (target) =>
+          target.matches(
+            ".keyboard-key, .backspace-btn, .speaker-btn, .enable-tracky-btn"
+          ),
+        click: ({ target, x, y }) => {
+          console.log("Dwell click on:", target);
+          // Simulate click on the target
+          const keyId = target.getAttribute("data-key-id");
+          if (keyId) {
+            setHoveredElement(keyId);
+          } else if (target.matches(".backspace-btn")) {
+            setHoveredElement("backspace-btn");
+          } else if (target.matches(".speaker-btn")) {
+            setHoveredElement("speaker-btn");
+          } else if (target.matches(".enable-tracky-btn")) {
+            // Already handled by clicking the button
+          }
+        },
+      };
+
+      dwellClickerRef.current =
+        window.TrackyMouse.initDwellClicking(dwellConfig);
+      setTrackyMouseEnabled(true);
+      console.log("TrackyMouse initialization complete");
+      console.log("Move your head to control the cursor");
+      console.log("Hover over keys for 3 seconds to click");
+    } catch (error) {
+      console.error("Error initializing TrackyMouse:", error);
+      alert(
+        "Failed to initialize head tracking.\n\nCheck: 1) Camera permission granted, 2) Console for errors\n\nError: " +
+          error.message
+      );
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (trackyMouseRef.current?.dispose) {
+        trackyMouseRef.current.dispose();
+      }
+      if (dwellClickerRef.current?.dispose) {
+        dwellClickerRef.current.dispose();
+      }
     };
   }, []);
 
@@ -952,6 +1182,47 @@ export default function KeyboardWithInput({
           <img src={BackspaceIcon} alt="Backspace" />
         </button>
       </div>
+
+      {!trackyMouseEnabled && trackyMouseReady && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            padding: "20px 40px",
+            backgroundColor: "rgba(33, 150, 243, 0.95)",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "18px",
+            fontWeight: "bold",
+            zIndex: 10001,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            textAlign: "center",
+          }}
+        >
+          🎥 Initializing Head Tracking...
+        </div>
+      )}
+
+      {trackyMouseEnabled && (
+        <div
+          style={{
+            position: "fixed",
+            top: "10px",
+            right: "10px",
+            padding: "8px 12px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            borderRadius: "4px",
+            fontSize: "12px",
+            zIndex: 10000,
+          }}
+        >
+          🎯 Head Tracking Active
+        </div>
+      )}
 
       <div className="keyboard-container">
         <div className="keyboard-header">CS435 HCI Vocab</div>

@@ -10,6 +10,50 @@
   box-sizing: border-box;
 }
 
+/* Tracky Mouse Integration Styles */
+.enable-tracky-btn {
+  transition: all 0.3s ease;
+}
+
+.enable-tracky-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4) !important;
+}
+
+.enable-tracky-btn:active {
+  transform: scale(0.98);
+}
+
+/* Make sure Tracky Mouse UI is visible */
+.tracky-mouse-ui {
+  z-index: 9999 !important;
+}
+
+/* Enhanced cursor visibility for head tracking */
+body {
+  cursor: auto;
+}
+
+.keyboard-key,
+.backspace-btn,
+.speaker-btn,
+.enable-tracky-btn {
+  cursor: pointer;
+}
+
+/* Custom pointer animation */
+@keyframes pulse-pointer {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.9;
+  }
+}
+
 .input-display {
   position: relative;
   width: 100%;
@@ -44,7 +88,7 @@
   height: 56px;
   border: none;
   background: transparent;
-  cursor: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
