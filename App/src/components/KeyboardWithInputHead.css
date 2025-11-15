@@ -1,0 +1,11 @@
+/* Hide the blue cursor for head tracking keyboard */
+.keyboard-with-input-head-screen ~ body::before,
+.keyboard-with-input-head-screen ~ body::after {
+  display: none !important;
+}
+
+/* Alternative approach: hide via parent */
+body:has(.keyboard-with-input-head-screen)::before,
+body:has(.keyboard-with-input-head-screen)::after {
+  display: none !important;
+}

@@ -1049,7 +1049,7 @@ export default function KeyboardWithInputSwitch({
   }, [hoveredElement, sentence, currentKeys]);
 
   return (
-    <div className="keyboard-with-input-screen">
+    <div className="keyboard-with-input-screen keyboard-with-input-switch-screen">
       {/* Time Popup Overlay */}
       {showTimePopup && (
         <div className="time-popup-overlay">

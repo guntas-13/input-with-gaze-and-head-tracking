@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./KeyboardWithInput.css";
+import "./KeyboardWithInputHead.css";
 import "./Keyboard.css";
 import BackspaceIcon from "../icons/backspace-32.svg";
 import SpeakerIcon from "../icons/speaker.png";
@@ -1322,7 +1323,7 @@ export default function KeyboardWithInput({
   }, [hoveredElement, sentence, currentKeys]);
 
   return (
-    <div className="keyboard-with-input-screen">
+    <div className="keyboard-with-input-screen keyboard-with-input-head-screen">
       {/* Setup Complete Popup */}
       {showSetupCompletePopup && (
         <div className="time-popup-overlay">
