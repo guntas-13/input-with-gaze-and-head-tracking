@@ -657,6 +657,8 @@ export default function KeyboardWithInputSwitch({
   const [showTimePopup, setShowTimePopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [showInstructionsPopup, setShowInstructionsPopup] = useState(true);
+  const [showSwitchStatusPopup, setShowSwitchStatusPopup] = useState(false);
+  const [switchStatusMessage, setSwitchStatusMessage] = useState("");
   const [currentTime, setCurrentTime] = useState({
     time: "",
     day: "",
@@ -668,7 +670,8 @@ export default function KeyboardWithInputSwitch({
   const [switchMode, setSwitchMode] = useState(false); // Mouse active by default
   const [switchActivated, setSwitchActivated] = useState(false);
   const [currentHighlight, setCurrentHighlight] = useState(null);
-  const [highlightMode, setHighlightMode] = useState("controls"); // 'controls', 'keys'
+  const [highlightMode, setHighlightMode] = useState("controls"); // 'controls', 'rows', 'keys'
+  const [selectedRow, setSelectedRow] = useState(null); // Track selected row for key navigation
   const switchTimerRef = useRef(null);
   const [switchDelay, setSwitchDelay] = useState(1500); // 1.5 seconds default, configurable
 
@@ -1033,20 +1036,24 @@ export default function KeyboardWithInputSwitch({
       }
 
       if (highlightMode === "controls") {
-        // Cycle through: speaker -> backspace -> keyboard
+        // Cycle through: speaker -> backspace -> rows
         if (currentHighlight === null) {
           setCurrentHighlight("speaker");
         } else if (currentHighlight === "speaker") {
           setCurrentHighlight("backspace");
         } else if (currentHighlight === "backspace") {
-          setHighlightMode("keys");
-          setCurrentHighlight(0); // First key
+          setHighlightMode("rows");
+          setCurrentHighlight(0); // First row
         }
+      } else if (highlightMode === "rows") {
+        // Cycle through rows (4 rows of 6 keys each)
+        const totalRows = Math.ceil(currentKeys.length / 6);
+        const nextRow = (currentHighlight + 1) % totalRows;
+        setCurrentHighlight(nextRow);
       } else if (highlightMode === "keys") {
-        const nextKey =
-          currentHighlight === null
-            ? 0
-            : (currentHighlight + 1) % currentKeys.length;
+        // Cycle through keys in the selected row
+        const keysInRow = 6;
+        const nextKey = (currentHighlight + 1) % keysInRow;
         setCurrentHighlight(nextKey);
       }
     };
@@ -1104,6 +1111,7 @@ export default function KeyboardWithInputSwitch({
           }
           setHighlightMode("controls");
           setCurrentHighlight("speaker");
+          setSelectedRow(null);
           return;
         }
 
@@ -1113,21 +1121,34 @@ export default function KeyboardWithInputSwitch({
             // Reset and wait for next spacebar press
             setCurrentHighlight(null);
             setHighlightMode("controls");
+            setSelectedRow(null);
           } else if (currentHighlight === "backspace") {
             handleBackspace();
             // Reset and wait for next spacebar press
             setCurrentHighlight(null);
             setHighlightMode("controls");
+            setSelectedRow(null);
           }
-        } else if (highlightMode === "keys" && currentHighlight !== null) {
-          // Key selected, execute action
-          const selectedKey = currentKeys[currentHighlight];
+        } else if (highlightMode === "rows" && currentHighlight !== null) {
+          // Row selected, drill down to keys in that row
+          setSelectedRow(currentHighlight);
+          setHighlightMode("keys");
+          setCurrentHighlight(0); // Start with first key in row
+        } else if (
+          highlightMode === "keys" &&
+          currentHighlight !== null &&
+          selectedRow !== null
+        ) {
+          // Calculate actual key index from row and position
+          const keyIndex = selectedRow * 6 + currentHighlight;
+          const selectedKey = currentKeys[keyIndex];
           if (selectedKey) {
             executeKeyAction(selectedKey.id);
           }
           // Reset and wait for next spacebar press
           setHighlightMode("controls");
           setCurrentHighlight(null);
+          setSelectedRow(null);
         }
       }
     };
@@ -1142,6 +1163,7 @@ export default function KeyboardWithInputSwitch({
     currentKeys,
     sentence,
     audioEnabled,
+    selectedRow,
   ]);
 
   // Toggle switch mode with 's' key
@@ -1161,7 +1183,16 @@ export default function KeyboardWithInputSwitch({
               setSwitchActivated(false);
               setCurrentHighlight(null);
               setHighlightMode("controls");
+              setSelectedRow(null);
             }
+
+            // Show status popup
+            setSwitchStatusMessage(newMode ? "ON" : "OFF");
+            setShowSwitchStatusPopup(true);
+            setTimeout(() => {
+              setShowSwitchStatusPopup(false);
+            }, 1500);
+
             return newMode;
           });
         }
@@ -1216,8 +1247,12 @@ export default function KeyboardWithInputSwitch({
 
     if (highlightMode === "controls") {
       return currentHighlight === type;
-    } else if (highlightMode === "keys" && type === "key") {
+    } else if (highlightMode === "rows" && type === "row") {
       return currentHighlight === index;
+    } else if (highlightMode === "keys" && type === "key") {
+      const rowIndex = Math.floor(index / 6);
+      const posInRow = index % 6;
+      return rowIndex === selectedRow && posInRow === currentHighlight;
     }
     return false;
   };
@@ -1231,6 +1266,20 @@ export default function KeyboardWithInputSwitch({
             <div className="time-popup-time">{currentTime.time}</div>
             <div className="time-popup-day">{currentTime.day}</div>
             <div className="time-popup-date">{currentTime.date}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Switch Status Popup */}
+      {showSwitchStatusPopup && (
+        <div className="switch-status-popup-overlay">
+          <div
+            className={`switch-status-popup ${
+              switchStatusMessage === "ON" ? "switch-on" : "switch-off"
+            }`}
+          >
+            <div className="switch-status-label">Switch Access Mode</div>
+            <div className="switch-status-value">{switchStatusMessage}</div>
           </div>
         </div>
       )}
@@ -1411,22 +1460,30 @@ export default function KeyboardWithInputSwitch({
       <div className="keyboard-container">
         <div className="keyboard-header">CS435 HCI Vocab</div>
         <div className="keyboard-grid">
-          {currentKeys.map((key, keyIndex) => (
-            <button
-              key={key.id}
-              data-key-id={key.id}
-              className={`keyboard-key ${key.type} ${
-                hoveredElement === key.id ? "hovered" : ""
-              } ${isHighlighted("key", keyIndex) ? "switch-highlighted" : ""}`}
-              style={{ backgroundColor: key.color }}
-              aria-label={key.label}
-            >
-              {key.icon && (
-                <img src={key.icon} alt={key.label} className="key-icon" />
-              )}
-              <span className="key-label">{key.label}</span>
-            </button>
-          ))}
+          {currentKeys.map((key, keyIndex) => {
+            const rowIndex = Math.floor(keyIndex / 6);
+            const isRowHighlighted = isHighlighted("row", rowIndex);
+            const isKeyHighlighted = isHighlighted("key", keyIndex);
+
+            return (
+              <button
+                key={key.id}
+                data-key-id={key.id}
+                className={`keyboard-key ${key.type} ${
+                  hoveredElement === key.id ? "hovered" : ""
+                } ${isRowHighlighted ? "switch-highlighted-row" : ""} ${
+                  isKeyHighlighted ? "switch-highlighted" : ""
+                }`}
+                style={{ backgroundColor: key.color }}
+                aria-label={key.label}
+              >
+                {key.icon && (
+                  <img src={key.icon} alt={key.label} className="key-icon" />
+                )}
+                <span className="key-label">{key.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
