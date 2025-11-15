@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./EyeGazeFlow.css";
 import EyeIcon from "../icons/eye-care.png";
-import KeyboardWithInputSwitch from "./KeyboardWithInputSwitch";
+import KeyboardWithInputEye from "./KeyboardWithInputEye";
+import popSound from "../sounds/ui-pop-sound-316482.mp3";
 
 // 8 calibration points (no center): corners + mids
 const CALIB_POINTS = [
@@ -23,8 +24,19 @@ export default function EyeGazeFlow({ onBack, audioEnabled }) {
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const stageRef = useRef(null);
   const rafRef = useRef(0);
+  const hoverSoundRef = useRef(null);
 
-  const DWELL_TIME = 2000; // 2 seconds in milliseconds
+  const DWELL_TIME = 1000; // 1 second
+
+  // Initialize audio
+  useEffect(() => {
+    hoverSoundRef.current = new Audio(popSound);
+    hoverSoundRef.current.volume = 0.5;
+
+    return () => {
+      if (hoverSoundRef.current) hoverSoundRef.current = null;
+    };
+  }, []);
 
   // Convert percent positions to style
   const targetStyle = useMemo(() => {
@@ -110,6 +122,11 @@ export default function EyeGazeFlow({ onBack, audioEnabled }) {
 
       if (found !== hoveredElement) {
         setHoveredElement(found);
+        // Play sound when starting to hover
+        if (found && hoverSoundRef.current) {
+          hoverSoundRef.current.currentTime = 0;
+          hoverSoundRef.current.play().catch(() => {});
+        }
       }
 
       rafRef.current = requestAnimationFrame(checkHover);
@@ -228,7 +245,7 @@ export default function EyeGazeFlow({ onBack, audioEnabled }) {
           {/* current target only */}
           <div className="target" style={targetStyle} />
           <div className="hint">
-            Look at the dot and hold for 2s ({index + 1}/{CALIB_POINTS.length})
+            Look at the dot and hold ({index + 1}/{CALIB_POINTS.length})
           </div>
         </div>
       )}
@@ -243,7 +260,7 @@ export default function EyeGazeFlow({ onBack, audioEnabled }) {
       )}
 
       {step === "done" && (
-        <KeyboardWithInputSwitch onClose={onBack} audioEnabled={audioEnabled} />
+        <KeyboardWithInputEye onClose={onBack} audioEnabled={audioEnabled} />
       )}
     </div>
   );
