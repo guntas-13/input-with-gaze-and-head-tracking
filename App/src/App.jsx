@@ -3,13 +3,14 @@ import Home from "../src/components/Home";
 import EyeGazeFlow from "../src/components/EyeGazeFlow";
 import VoiceFlow from "../src/components/VoiceFlow";
 import HeadTrackingFlow from "../src/components/HeadTrackingFlow";
+import SwitchControl from "../src/components/SwitchControl";
 import "../src/index.css";
 import popSound from "../src/sounds/ui-pop-sound-316482.mp3";
 
 import "./App.css";
 
 function App() {
-  const [route, setRoute] = useState("home"); // 'home' | 'eye' | 'voice' | 'head'
+  const [route, setRoute] = useState("home"); // 'home' | 'eye' | 'voice' | 'head' | 'switch'
   const [audioEnabled, setAudioEnabled] = useState(false);
   const audioInitializedRef = useRef(false);
 
@@ -58,6 +59,15 @@ function App() {
   if (route === "head") {
     return (
       <HeadTrackingFlow
+        onBack={() => setRoute("home")}
+        audioEnabled={audioEnabled}
+      />
+    );
+  }
+
+  if (route === "switch") {
+    return (
+      <SwitchControl
         onBack={() => setRoute("home")}
         audioEnabled={audioEnabled}
       />

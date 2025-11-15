@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./HeadTrackingFlow.css";
-import KeyboardWithInput from "./KeyboardWithInput";
+import KeyboardWithInput from "./KeyboardWithInputHead";
 
 export default function HeadTrackingFlow({ onBack, audioEnabled }) {
   // Handle 'B' key press to go back to home

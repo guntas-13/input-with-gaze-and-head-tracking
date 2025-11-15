@@ -6,11 +6,13 @@ import popSound from "../sounds/ui-pop-sound-316482.mp3";
 import EyeIcon from "../icons/eye-care.png";
 import MicIcon from "../icons/voice.png";
 import HeadIcon from "../icons/face-id.png";
+import ButtonIcon from "../icons/button.png";
 
 const CARDS = [
   { id: "eye", title: "Eye-Gaze", icon: EyeIcon },
   { id: "voice", title: "Voice Recognition", icon: MicIcon },
   { id: "head", title: "Head Tracking", icon: HeadIcon },
+  { id: "switch", title: "Switch Control", icon: ButtonIcon },
 ];
 
 const DWELL_TIME = 2000; // 2 seconds in milliseconds
