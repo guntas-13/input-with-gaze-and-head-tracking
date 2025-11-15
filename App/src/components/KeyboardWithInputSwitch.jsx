@@ -656,12 +656,21 @@ export default function KeyboardWithInputSwitch({
   const [currentKeys, setCurrentKeys] = useState(KEYBOARD_LAYOUTS.default);
   const [showTimePopup, setShowTimePopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
+  const [showInstructionsPopup, setShowInstructionsPopup] = useState(true);
   const [currentTime, setCurrentTime] = useState({
     time: "",
     day: "",
     date: "",
   });
-  const [dwellTime, setDwellTime] = useState(3500); // milliseconds (3.5 seconds default)
+  const [dwellTime, setDwellTime] = useState(2500); // milliseconds (2.5 seconds default)
+
+  // Switch navigation states
+  const [switchMode, setSwitchMode] = useState(false); // Mouse active by default
+  const [switchActivated, setSwitchActivated] = useState(false);
+  const [currentHighlight, setCurrentHighlight] = useState(null);
+  const [highlightMode, setHighlightMode] = useState("controls"); // 'controls', 'keys'
+  const switchTimerRef = useRef(null);
+  const [switchDelay, setSwitchDelay] = useState(1500); // 1.5 seconds default, configurable
 
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const rafRef = useRef(0);
@@ -772,7 +781,7 @@ export default function KeyboardWithInputSwitch({
   useEffect(() => {
     const checkHover = () => {
       // Skip hover detection if any popup is showing
-      if (showTimePopup || showSettingsPopup) {
+      if (showTimePopup || showSettingsPopup || showInstructionsPopup) {
         rafRef.current = requestAnimationFrame(checkHover);
         return;
       }
@@ -831,7 +840,7 @@ export default function KeyboardWithInputSwitch({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [hoveredElement, showTimePopup, showSettingsPopup]);
+  }, [hoveredElement, showTimePopup, showSettingsPopup, showInstructionsPopup]);
 
   // Handle backspace
   const handleBackspace = () => {
@@ -1010,6 +1019,159 @@ export default function KeyboardWithInputSwitch({
     setHoveredElement(null);
   };
 
+  // Switch navigation logic
+  useEffect(() => {
+    if (!switchMode || !switchActivated) return;
+    // Only run timer if we have a current highlight (navigation is active)
+    if (currentHighlight === null) return;
+
+    const advanceHighlight = () => {
+      // Play sound when advancing
+      if (hoverSoundRef.current && audioEnabled) {
+        hoverSoundRef.current.currentTime = 0;
+        hoverSoundRef.current.play().catch(() => {});
+      }
+
+      if (highlightMode === "controls") {
+        // Cycle through: speaker -> backspace -> keyboard
+        if (currentHighlight === null) {
+          setCurrentHighlight("speaker");
+        } else if (currentHighlight === "speaker") {
+          setCurrentHighlight("backspace");
+        } else if (currentHighlight === "backspace") {
+          setHighlightMode("keys");
+          setCurrentHighlight(0); // First key
+        }
+      } else if (highlightMode === "keys") {
+        const nextKey =
+          currentHighlight === null
+            ? 0
+            : (currentHighlight + 1) % currentKeys.length;
+        setCurrentHighlight(nextKey);
+      }
+    };
+
+    // Auto-advance timer
+    if (switchTimerRef.current) {
+      clearTimeout(switchTimerRef.current);
+    }
+
+    switchTimerRef.current = setTimeout(() => {
+      advanceHighlight();
+    }, switchDelay);
+
+    return () => {
+      if (switchTimerRef.current) {
+        clearTimeout(switchTimerRef.current);
+      }
+    };
+  }, [
+    switchMode,
+    switchActivated,
+    currentHighlight,
+    highlightMode,
+    currentKeys,
+    audioEnabled,
+    switchDelay,
+  ]);
+
+  // Handle spacebar for switch selection
+  useEffect(() => {
+    if (!switchMode) return;
+
+    const handleSpacebar = (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+
+        // First spacebar press activates the system
+        if (!switchActivated) {
+          // Play sound when activating
+          if (hoverSoundRef.current && audioEnabled) {
+            hoverSoundRef.current.currentTime = 0;
+            hoverSoundRef.current.play().catch(() => {});
+          }
+          setSwitchActivated(true);
+          setCurrentHighlight("speaker"); // Start with speaker
+          return;
+        }
+
+        // If navigation is paused (currentHighlight is null), restart from speaker
+        if (currentHighlight === null) {
+          // Play sound when restarting
+          if (hoverSoundRef.current && audioEnabled) {
+            hoverSoundRef.current.currentTime = 0;
+            hoverSoundRef.current.play().catch(() => {});
+          }
+          setHighlightMode("controls");
+          setCurrentHighlight("speaker");
+          return;
+        }
+
+        if (highlightMode === "controls") {
+          if (currentHighlight === "speaker") {
+            handleSpeaker();
+            // Reset and wait for next spacebar press
+            setCurrentHighlight(null);
+            setHighlightMode("controls");
+          } else if (currentHighlight === "backspace") {
+            handleBackspace();
+            // Reset and wait for next spacebar press
+            setCurrentHighlight(null);
+            setHighlightMode("controls");
+          }
+        } else if (highlightMode === "keys" && currentHighlight !== null) {
+          // Key selected, execute action
+          const selectedKey = currentKeys[currentHighlight];
+          if (selectedKey) {
+            executeKeyAction(selectedKey.id);
+          }
+          // Reset and wait for next spacebar press
+          setHighlightMode("controls");
+          setCurrentHighlight(null);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleSpacebar);
+    return () => window.removeEventListener("keydown", handleSpacebar);
+  }, [
+    switchMode,
+    switchActivated,
+    currentHighlight,
+    highlightMode,
+    currentKeys,
+    sentence,
+    audioEnabled,
+  ]);
+
+  // Toggle switch mode with 's' key
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === "s" || e.key === "S") {
+        // Close instructions popup if showing
+        if (showInstructionsPopup) {
+          setShowInstructionsPopup(false);
+        }
+
+        if (!showTimePopup && !showSettingsPopup) {
+          setSwitchMode((prev) => {
+            const newMode = !prev;
+            if (!newMode) {
+              // Reset switch state when turning off
+              setSwitchActivated(false);
+              setCurrentHighlight(null);
+              setHighlightMode("controls");
+            }
+            return newMode;
+          });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [showTimePopup, showSettingsPopup, showInstructionsPopup]);
+
   // Dwell timer for ALL elements
   useEffect(() => {
     if (dwellTimerRef.current) {
@@ -1048,6 +1210,18 @@ export default function KeyboardWithInputSwitch({
     };
   }, [hoveredElement, sentence, currentKeys]);
 
+  // Helper to check if element is highlighted
+  const isHighlighted = (type, index = null) => {
+    if (!switchMode || !switchActivated) return false;
+
+    if (highlightMode === "controls") {
+      return currentHighlight === type;
+    } else if (highlightMode === "keys" && type === "key") {
+      return currentHighlight === index;
+    }
+    return false;
+  };
+
   return (
     <div className="keyboard-with-input-screen keyboard-with-input-switch-screen">
       {/* Time Popup Overlay */}
@@ -1057,6 +1231,37 @@ export default function KeyboardWithInputSwitch({
             <div className="time-popup-time">{currentTime.time}</div>
             <div className="time-popup-day">{currentTime.day}</div>
             <div className="time-popup-date">{currentTime.date}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions Popup Overlay */}
+      {showInstructionsPopup && (
+        <div className="time-popup-overlay">
+          <div className="instructions-popup">
+            <div className="instructions-popup-header">
+              <h2>Switch-based Navigation</h2>
+            </div>
+            <div className="instructions-popup-content">
+              <div className="instruction-item">
+                <span className="instruction-key">S</span>
+                <span className="instruction-text">
+                  Toggle Switch Access Mode ON/OFF
+                </span>
+              </div>
+              <div className="instruction-item">
+                <span className="instruction-key">SPACE</span>
+                <span className="instruction-text">
+                  Start/Select in Switch Mode
+                </span>
+              </div>
+            </div>
+            <div className="instruction-footer">
+              <div className="instruction-footer-main">
+                To BEGIN Press <span className="instruction-key-inline">S</span>{" "}
+                to toggle Switch Mode ON
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1084,6 +1289,72 @@ export default function KeyboardWithInputSwitch({
             </div>
 
             <div className="settings-content">
+              {/* Switch Mode Toggle */}
+              <div className="setting-control">
+                <label className="setting-label">
+                  <span className="setting-name">Switch Access Mode</span>
+                  <span className="setting-value">
+                    {switchMode ? "ON" : "OFF"}
+                  </span>
+                </label>
+                <div className="slider-container">
+                  <button
+                    className="toggle-btn"
+                    onClick={() => {
+                      setSwitchMode(!switchMode);
+                      if (switchMode) {
+                        // Reset switch state when turning off
+                        setSwitchActivated(false);
+                        setCurrentHighlight(null);
+                        setHighlightMode("controls");
+                      }
+                    }}
+                    style={{
+                      background: switchMode ? "#4caf50" : "#ff5252",
+                      color: "white",
+                      border: "none",
+                      padding: "0.5rem 1.5rem",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontFamily: '"Courier New", monospace',
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      width: "100%",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    {switchMode ? "Disable" : "Enable"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Switch Delay */}
+              {switchMode && (
+                <div className="setting-control">
+                  <label className="setting-label">
+                    <span className="setting-name">Switch Delay</span>
+                    <span className="setting-value">
+                      {(switchDelay / 1000).toFixed(1)}s
+                    </span>
+                  </label>
+                  <div className="slider-container">
+                    <span className="slider-min">0.5s</span>
+                    <input
+                      type="range"
+                      min="500"
+                      max="5000"
+                      step="500"
+                      value={switchDelay}
+                      onChange={(e) =>
+                        setSwitchDelay(parseFloat(e.target.value))
+                      }
+                      className="setting-slider"
+                    />
+                    <span className="slider-max">5s</span>
+                  </div>
+                </div>
+              )}
+
               {/* Dwell Time */}
               <div className="setting-control">
                 <label className="setting-label">
@@ -1119,10 +1390,20 @@ export default function KeyboardWithInputSwitch({
           value={sentence}
           readOnly
         />
-        <button className="speaker-btn" aria-label="Speak sentence">
+        <button
+          className={`speaker-btn ${
+            isHighlighted("speaker") ? "switch-highlighted" : ""
+          }`}
+          aria-label="Speak sentence"
+        >
           <img src={SpeakerIcon} alt="Speaker" />
         </button>
-        <button className="backspace-btn" aria-label="Backspace">
+        <button
+          className={`backspace-btn ${
+            isHighlighted("backspace") ? "switch-highlighted" : ""
+          }`}
+          aria-label="Backspace"
+        >
           <img src={BackspaceIcon} alt="Backspace" />
         </button>
       </div>
@@ -1130,13 +1411,13 @@ export default function KeyboardWithInputSwitch({
       <div className="keyboard-container">
         <div className="keyboard-header">CS435 HCI Vocab</div>
         <div className="keyboard-grid">
-          {currentKeys.map((key) => (
+          {currentKeys.map((key, keyIndex) => (
             <button
               key={key.id}
               data-key-id={key.id}
               className={`keyboard-key ${key.type} ${
                 hoveredElement === key.id ? "hovered" : ""
-              }`}
+              } ${isHighlighted("key", keyIndex) ? "switch-highlighted" : ""}`}
               style={{ backgroundColor: key.color }}
               aria-label={key.label}
             >
