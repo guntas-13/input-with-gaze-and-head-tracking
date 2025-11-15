@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import "./HeadTrackingFlow.css";
-import KeyboardWithInput from "./KeyboardWithInputHead";
+import "./SwitchControl.css";
+import KeyboardWithInputSwitch from "./KeyboardWithInputSwitch";
 
-export default function HeadTrackingFlow({ onBack, audioEnabled }) {
+export default function SwitchControl({ onBack, audioEnabled }) {
   // Handle 'B' key press to go back to home
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -16,8 +16,8 @@ export default function HeadTrackingFlow({ onBack, audioEnabled }) {
   }, [onBack]);
 
   return (
-    <div className="head-wrapper">
-      <KeyboardWithInput onClose={onBack} audioEnabled={audioEnabled} />
+    <div className="switch-wrapper">
+      <KeyboardWithInputSwitch onClose={onBack} audioEnabled={audioEnabled} />
     </div>
   );
 }

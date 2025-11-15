@@ -16,7 +16,7 @@ import EatIcon from "../icons/binge-eating.png";
 import LikeIcon from "../icons/like.png";
 import RainbowIcon from "../icons/rainbow_10129397.png";
 import SadIcon from "../icons/sad.png";
-import DrinkIcon from "../icons/soda_1652494.png";
+import DrinkIcon from "../icons/cocktail.png";
 import PlayIcon from "../icons/rc-car.png";
 import StopIcon from "../icons/stop_5181609.png";
 import CancelIcon from "../icons/cancel_1721955.png";
@@ -40,7 +40,6 @@ import LoveIcon from "../icons/love.png";
 import ToCallIcon from "../icons/phone-call.png";
 import ListenIcon from "../icons/listen.png";
 
-const DWELL_TIME = 3000; // 3 seconds for keyboard keys
 const BACKSPACE_DWELL_TIME = 2000; // 2 seconds for backspace
 
 // Define different keyboard layouts
@@ -646,7 +645,7 @@ const KEYBOARD_LAYOUTS = {
   ],
 };
 
-export default function KeyboardWithInput({
+export default function KeyboardWithInputSwitch({
   onClose,
   getLLMSuggestions,
   audioEnabled,
@@ -655,30 +654,20 @@ export default function KeyboardWithInput({
   const [hoveredElement, setHoveredElement] = useState(null);
   const [currentLayout, setCurrentLayout] = useState("default");
   const [currentKeys, setCurrentKeys] = useState(KEYBOARD_LAYOUTS.default);
-  const [trackyMouseEnabled, setTrackyMouseEnabled] = useState(false);
-  const [trackyMouseReady, setTrackyMouseReady] = useState(false);
   const [showTimePopup, setShowTimePopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
-  const [showSetupCompletePopup, setShowSetupCompletePopup] = useState(false);
   const [currentTime, setCurrentTime] = useState({
     time: "",
     day: "",
     date: "",
   });
-  const [trackySettings, setTrackySettings] = useState({
-    horizontalSensitivity: 25,
-    verticalSensitivity: 50,
-    acceleration: 50,
-    dwellTime: 4000, // milliseconds (4 seconds default)
-  });
+  const [dwellTime, setDwellTime] = useState(3500); // milliseconds (3.5 seconds default)
 
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const rafRef = useRef(0);
   const dwellTimerRef = useRef(null);
   const hoverSoundRef = useRef(null);
   const speechSynthRef = useRef(null);
-  const trackyMouseRef = useRef(null);
-  const dwellClickerRef = useRef(null);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -728,223 +717,42 @@ export default function KeyboardWithInput({
     };
   }, []);
 
-  // Auto-enable when TrackyMouse becomes ready
-  useEffect(() => {
-    if (trackyMouseReady && !trackyMouseEnabled) {
-      console.log("Auto-enabling head tracking...");
-      const timer = setTimeout(() => {
-        initTrackyMouse();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [trackyMouseReady, trackyMouseEnabled]);
-
-  // Check if Tracky Mouse is loaded
-  useEffect(() => {
-    console.log("Checking for TrackyMouse library...");
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    const checkTrackyMouse = () => {
-      if (typeof window.TrackyMouse !== "undefined") {
-        console.log("TrackyMouse library loaded");
-        setTrackyMouseReady(true);
-      } else {
-        attempts++;
-        if (attempts < maxAttempts) {
-          if (attempts % 10 === 0) {
-            console.log(`Waiting for TrackyMouse... (${attempts / 10}s)`);
-          }
-          setTimeout(checkTrackyMouse, 100);
-        } else {
-          console.error("TrackyMouse library failed to load after 10 seconds");
-        }
-      }
-    };
-
-    // Start checking after a small delay to let deferred script load
-    setTimeout(checkTrackyMouse, 100);
-  }, []);
-
-  // Function to initialize Tracky Mouse
-  const initTrackyMouse = async () => {
-    if (!trackyMouseReady || typeof window.TrackyMouse === "undefined") {
-      console.error("TrackyMouse not loaded");
-      return;
-    }
-
-    try {
-      console.log("Initializing TrackyMouse...");
-
-      window.TrackyMouse.dependenciesRoot = "/tracky-mouse";
-      console.log(
-        "Dependencies root set:",
-        window.TrackyMouse.dependenciesRoot
-      );
-
-      await window.TrackyMouse.loadDependencies();
-
-      console.log("Initializing head tracking...");
-      trackyMouseRef.current = window.TrackyMouse.init(null, {
-        statsJs: false,
-      });
-      console.log("Head tracking initialized");
-
-      setTimeout(() => {
-        const trackyUI = document.querySelector(".tracky-mouse-ui");
-        if (trackyUI) {
-          trackyUI.style.display = "none";
-          console.log("TrackyMouse UI hidden");
-        }
-      }, 100);
-
-      await window.TrackyMouse.useCamera();
-
-      // Auto-start tracking by simulating F9 press
-      console.log("Auto-starting tracking (F9)...");
-      const f9Event = new KeyboardEvent("keydown", {
-        key: "F9",
-        code: "F9",
-        keyCode: 120,
-        which: 120,
-        bubbles: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(f9Event);
-      console.log("Tracking started");
-
-      // Enable the pointer explicitly
-      if (window.TrackyMouse.setPointerVisibility) {
-        window.TrackyMouse.setPointerVisibility(true);
-        console.log("Pointer visibility enabled");
-      }
-
-      let last_el_over = null;
-      window.TrackyMouse.onPointerMove = (x, y) => {
-        const target = document.elementFromPoint(x, y) || document.body;
-
-        // Update mouse reference for our existing hover detection
-        mouseRef.current = { x, y };
-
-        if (target !== last_el_over) {
-          if (last_el_over) {
-            const event = new PointerEvent("pointerleave", {
-              view: window,
-              clientX: x,
-              clientY: y,
-              pointerId: 1234567890,
-              pointerType: "mouse",
-              isPrimary: true,
-              bubbles: false,
-              cancelable: false,
-            });
-            last_el_over.dispatchEvent(event);
-          }
-          const event = new PointerEvent("pointerenter", {
-            view: window,
-            clientX: x,
-            clientY: y,
-            pointerId: 1234567890,
-            pointerType: "mouse",
-            isPrimary: true,
-            bubbles: false,
-            cancelable: false,
-          });
-          target.dispatchEvent(event);
-          last_el_over = target;
-        }
-
-        const event = new PointerEvent("pointermove", {
-          view: window,
-          clientX: x,
-          clientY: y,
-          pointerId: 1234567890,
-          pointerType: "mouse",
-          isPrimary: true,
-          button: 0,
-          buttons: 1,
-          bubbles: true,
-          cancelable: true,
-        });
-        target.dispatchEvent(event);
-      };
-      console.log("Pointer control configured");
-
-      // Store pointer reference for dwell animation
-      setTimeout(() => {
-        const pointer = document.querySelector(".tracky-mouse-pointer");
-        if (pointer) {
-          // Just ensure visibility, don't override CSS styling
-          pointer.style.display = "block";
-          pointer.style.visibility = "visible";
-          console.log("Pointer element found and visible");
-        } else {
-          console.warn("Pointer element not found");
-        }
-      }, 500);
-
-      // Don't use TrackyMouse's dwell clicking - we handle it manually with better visual feedback
-      console.log("TrackyMouse pointer control ready");
-
-      setTrackyMouseEnabled(true);
-
-      // Show setup complete popup
-      setShowSetupCompletePopup(true);
-      setTimeout(() => {
-        setShowSetupCompletePopup(false);
-      }, 5000);
-    } catch (error) {
-      console.error("Error initializing TrackyMouse:", error);
-    }
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (trackyMouseRef.current?.dispose) {
-        trackyMouseRef.current.dispose();
-      }
-      if (dwellClickerRef.current?.dispose) {
-        dwellClickerRef.current.dispose();
-      }
-    };
-  }, []);
-
-  // Track mouse position
+  // Track mouse position and update CSS custom properties for cursor
   useEffect(() => {
     const onMove = (e) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
+      // Update CSS custom properties for the blue cursor position
+      document.body.style.setProperty("--mouse-x", `${e.clientX}px`);
+      document.body.style.setProperty("--mouse-y", `${e.clientY}px`);
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // Update cursor fill animation
+  // Update cursor fill animation and play hover sound
   useEffect(() => {
     if (hoveredElement) {
       const duration =
         hoveredElement === "backspace-btn" || hoveredElement === "speaker-btn"
           ? BACKSPACE_DWELL_TIME
-          : trackySettings.dwellTime;
+          : dwellTime;
 
-      // Update TrackyMouse pointer (red)
-      const pointer = document.querySelector(".tracky-mouse-pointer");
-      if (pointer && trackyMouseEnabled) {
-        pointer.style.setProperty("--dwell-duration", "0ms");
-        pointer.style.setProperty(
-          "--cursor-fill",
-          "inset(100% 0 0 0 round 50%)"
-        );
+      // Update the existing cursor fill animation using CSS custom properties
+      document.body.style.setProperty("--dwell-duration", "0s");
+      document.body.style.setProperty(
+        "--cursor-fill",
+        "inset(100% 0 0 0 round 50%)"
+      );
+
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            pointer.style.setProperty("--dwell-duration", `${duration}ms`);
-            pointer.style.setProperty(
-              "--cursor-fill",
-              "inset(0 0 0 0 round 50%)"
-            );
-          });
+          document.body.style.setProperty("--dwell-duration", `${duration}ms`);
+          document.body.style.setProperty(
+            "--cursor-fill",
+            "inset(0 0 0 0 round 50%)"
+          );
         });
-      }
+      });
 
       if (hoverSoundRef.current && audioEnabled) {
         hoverSoundRef.current.currentTime = 0;
@@ -952,16 +760,13 @@ export default function KeyboardWithInput({
       }
     } else {
       // Reset fill when not hovering
-      const pointer = document.querySelector(".tracky-mouse-pointer");
-      if (pointer) {
-        pointer.style.setProperty("--dwell-duration", "0ms");
-        pointer.style.setProperty(
-          "--cursor-fill",
-          "inset(100% 0 0 0 round 50%)"
-        );
-      }
+      document.body.style.setProperty("--dwell-duration", "0s");
+      document.body.style.setProperty(
+        "--cursor-fill",
+        "inset(100% 0 0 0 round 50%)"
+      );
     }
-  }, [hoveredElement, audioEnabled, trackyMouseEnabled]);
+  }, [hoveredElement, audioEnabled, dwellTime]);
 
   // Hover detection loop
   useEffect(() => {
@@ -1027,40 +832,6 @@ export default function KeyboardWithInput({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [hoveredElement, showTimePopup, showSettingsPopup]);
-
-  // Update settings popup camera feed
-  useEffect(() => {
-    if (!showSettingsPopup) return;
-
-    const updateCamera = () => {
-      const trackyCanvas = document.querySelector(".tracky-mouse-canvas");
-      const container = document.getElementById("settings-camera-container");
-      if (trackyCanvas && container) {
-        // Clone and update canvas continuously
-        let existingCanvas = container.querySelector("canvas");
-
-        if (!existingCanvas) {
-          existingCanvas = document.createElement("canvas");
-          existingCanvas.style.maxWidth = "100%";
-          existingCanvas.style.borderRadius = "8px";
-          container.innerHTML = "";
-          container.appendChild(existingCanvas);
-        }
-
-        // Copy dimensions and content
-        existingCanvas.width = trackyCanvas.width;
-        existingCanvas.height = trackyCanvas.height;
-        const destCtx = existingCanvas.getContext("2d");
-        destCtx.drawImage(trackyCanvas, 0, 0);
-      }
-    };
-
-    // Update camera feed continuously
-    const interval = setInterval(updateCamera, 100); // Update every 100ms
-    updateCamera(); // Initial update
-
-    return () => clearInterval(interval);
-  }, [showSettingsPopup]);
 
   // Handle backspace
   const handleBackspace = () => {
@@ -1136,55 +907,10 @@ export default function KeyboardWithInput({
       setShowSettingsPopup(true);
       console.log("Settings popup opened");
 
-      // Sync current slider values from TrackyMouse
-      setTimeout(() => {
-        const xSlider = document.querySelector(".tracky-mouse-sensitivity-x");
-        const ySlider = document.querySelector(".tracky-mouse-sensitivity-y");
-        const accelSlider = document.querySelector(
-          ".tracky-mouse-acceleration"
-        );
-
-        if (xSlider && ySlider && accelSlider) {
-          setTrackySettings({
-            horizontalSensitivity: parseFloat(xSlider.value),
-            verticalSensitivity: parseFloat(ySlider.value),
-            acceleration: parseFloat(accelSlider.value),
-          });
-        }
-      }, 50);
-
       // Optionally speak
       if (audioEnabled) {
         speakText("Settings");
       }
-    }
-  };
-
-  // Handle sensitivity changes
-  const handleSensitivityChange = (type, value) => {
-    const newSettings = { ...trackySettings, [type]: parseFloat(value) };
-    setTrackySettings(newSettings);
-
-    // Update TrackyMouse UI sliders directly and trigger their onchange handlers
-    try {
-      let slider;
-      if (type === "horizontalSensitivity") {
-        slider = document.querySelector(".tracky-mouse-sensitivity-x");
-      } else if (type === "verticalSensitivity") {
-        slider = document.querySelector(".tracky-mouse-sensitivity-y");
-      } else if (type === "acceleration") {
-        slider = document.querySelector(".tracky-mouse-acceleration");
-      }
-
-      if (slider) {
-        slider.value = value;
-        // Trigger the onchange handler that TrackyMouse set up
-        if (slider.onchange) {
-          slider.onchange(new Event("change"));
-        }
-      }
-    } catch (error) {
-      console.error("Error updating TrackyMouse settings:", error);
     }
   };
 
@@ -1295,10 +1021,10 @@ export default function KeyboardWithInput({
 
     console.log("Starting dwell timer for:", hoveredElement);
 
-    const dwellTime =
+    const dwellDuration =
       hoveredElement === "backspace-btn" || hoveredElement === "speaker-btn"
         ? BACKSPACE_DWELL_TIME
-        : trackySettings.dwellTime;
+        : dwellTime;
 
     dwellTimerRef.current = setTimeout(() => {
       console.log("Dwell completed for:", hoveredElement);
@@ -1312,7 +1038,7 @@ export default function KeyboardWithInput({
       } else {
         executeKeyAction(hoveredElement);
       }
-    }, dwellTime);
+    }, dwellDuration);
 
     return () => {
       if (dwellTimerRef.current) {
@@ -1324,16 +1050,6 @@ export default function KeyboardWithInput({
 
   return (
     <div className="keyboard-with-input-screen">
-      {/* Setup Complete Popup */}
-      {showSetupCompletePopup && (
-        <div className="time-popup-overlay">
-          <div className="time-popup">
-            <div className="time-popup-day">✓ Head Tracking Setup Complete</div>
-            <div className="time-popup-date">Use head gaze to navigate</div>
-          </div>
-        </div>
-      )}
-
       {/* Time Popup Overlay */}
       {showTimePopup && (
         <div className="time-popup-overlay">
@@ -1357,7 +1073,7 @@ export default function KeyboardWithInput({
         >
           <div className="settings-popup">
             <div className="settings-popup-header">
-              <h2>Head-Gaze TrackyMouse Settings</h2>
+              <h2>Mouse Settings</h2>
               <button
                 className="settings-close-btn"
                 onClick={handleSettingsPopup}
@@ -1368,104 +1084,12 @@ export default function KeyboardWithInput({
             </div>
 
             <div className="settings-content">
-              {/* Camera Preview - Moved to top */}
-              <div className="camera-preview-section">
-                <h3 className="camera-title">Camera Preview</h3>
-                <div
-                  className="camera-preview-box"
-                  id="settings-camera-container"
-                >
-                  {/* TrackyMouse canvas will be cloned here */}
-                </div>
-              </div>
-
-              {/* Horizontal Sensitivity */}
-              <div className="setting-control">
-                <label className="setting-label">
-                  <span className="setting-name">Horizontal Sensitivity</span>
-                  <span className="setting-value">
-                    {trackySettings.horizontalSensitivity.toFixed(0)}
-                  </span>
-                </label>
-                <div className="slider-container">
-                  <span className="slider-min">Slow</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={trackySettings.horizontalSensitivity}
-                    onChange={(e) =>
-                      handleSensitivityChange(
-                        "horizontalSensitivity",
-                        e.target.value
-                      )
-                    }
-                    className="setting-slider"
-                  />
-                  <span className="slider-max">Fast</span>
-                </div>
-              </div>
-
-              {/* Vertical Sensitivity */}
-              <div className="setting-control">
-                <label className="setting-label">
-                  <span className="setting-name">Vertical Sensitivity</span>
-                  <span className="setting-value">
-                    {trackySettings.verticalSensitivity.toFixed(0)}
-                  </span>
-                </label>
-                <div className="slider-container">
-                  <span className="slider-min">Slow</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={trackySettings.verticalSensitivity}
-                    onChange={(e) =>
-                      handleSensitivityChange(
-                        "verticalSensitivity",
-                        e.target.value
-                      )
-                    }
-                    className="setting-slider"
-                  />
-                  <span className="slider-max">Fast</span>
-                </div>
-              </div>
-
-              {/* Acceleration */}
-              <div className="setting-control">
-                <label className="setting-label">
-                  <span className="setting-name">Acceleration</span>
-                  <span className="setting-value">
-                    {trackySettings.acceleration.toFixed(0)}
-                  </span>
-                </label>
-                <div className="slider-container">
-                  <span className="slider-min">Linear</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={trackySettings.acceleration}
-                    onChange={(e) =>
-                      handleSensitivityChange("acceleration", e.target.value)
-                    }
-                    className="setting-slider"
-                  />
-                  <span className="slider-max">Smooth</span>
-                </div>
-              </div>
-
               {/* Dwell Time */}
               <div className="setting-control">
                 <label className="setting-label">
                   <span className="setting-name">Dwell Time</span>
                   <span className="setting-value">
-                    {(trackySettings.dwellTime / 1000).toFixed(1)}s
+                    {(dwellTime / 1000).toFixed(1)}s
                   </span>
                 </label>
                 <div className="slider-container">
@@ -1475,27 +1099,11 @@ export default function KeyboardWithInput({
                     min="2000"
                     max="8000"
                     step="500"
-                    value={trackySettings.dwellTime}
-                    onChange={(e) =>
-                      handleSensitivityChange("dwellTime", e.target.value)
-                    }
+                    value={dwellTime}
+                    onChange={(e) => setDwellTime(parseFloat(e.target.value))}
                     className="setting-slider"
                   />
                   <span className="slider-max">8s</span>
-                </div>
-              </div>
-
-              {/* Status Info */}
-              <div className="settings-status">
-                <div className="status-item">
-                  <span className="status-label">Status:</span>
-                  <span
-                    className={`status-value ${
-                      trackyMouseEnabled ? "active" : "inactive"
-                    }`}
-                  >
-                    {trackyMouseEnabled ? "● Active" : "○ Inactive"}
-                  </span>
                 </div>
               </div>
             </div>

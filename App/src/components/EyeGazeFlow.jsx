@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./EyeGazeFlow.css";
 import EyeIcon from "../icons/eye-care.png";
-import KeyboardWithInput from "./KeyboardWithInput";
+import KeyboardWithInputSwitch from "./KeyboardWithInputSwitch";
 
 // 8 calibration points (no center): corners + mids
 const CALIB_POINTS = [
@@ -243,7 +243,7 @@ export default function EyeGazeFlow({ onBack, audioEnabled }) {
       )}
 
       {step === "done" && (
-        <KeyboardWithInput onClose={onBack} audioEnabled={audioEnabled} />
+        <KeyboardWithInputSwitch onClose={onBack} audioEnabled={audioEnabled} />
       )}
     </div>
   );

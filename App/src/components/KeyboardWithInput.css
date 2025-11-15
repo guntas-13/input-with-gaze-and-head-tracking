@@ -1,15 +1,3 @@
-/* Hide the blue cursor when keyboard is active */
-.keyboard-with-input-screen ~ body::before,
-.keyboard-with-input-screen ~ body::after {
-  display: none !important;
-}
-
-/* Alternative approach: hide via parent */
-body:has(.keyboard-with-input-screen)::before,
-body:has(.keyboard-with-input-screen)::after {
-  display: none !important;
-}
-
 /* Keyboard with input screen */
 .keyboard-with-input-screen {
   width: 100vw;
